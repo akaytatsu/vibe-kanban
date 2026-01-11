@@ -181,6 +181,28 @@ pub async fn create_task_attempt(
         .await?
         .ok_or(SqlxError::RowNotFound)?;
 
+    // Auto-pull main branch if configured
+    if project.auto_pull_main_branch {
+        for repo_input in &payload.repos {
+            if let Ok(repo) = Repo::find_by_id(pool, repo_input.repo_id).await {
+                if let Err(e) = deployment.git().pull_branch(&repo.path, &repo_input.target_branch) {
+                    tracing::warn!(
+                        "Failed to auto-pull main branch '{}' for repo '{}': {}",
+                        repo_input.target_branch,
+                        repo.name,
+                        e
+                    );
+                } else {
+                    tracing::info!(
+                        "Auto-pulled main branch '{}' for repo '{}'",
+                        repo_input.target_branch,
+                        repo.name
+                    );
+                }
+            }
+        }
+    }
+
     let agent_working_dir = project
         .default_agent_working_dir
         .as_ref()
@@ -845,6 +867,18 @@ pub struct ChangeTargetBranchResponse {
 #[derive(serde::Deserialize, Debug, TS)]
 pub struct RenameBranchRequest {
     pub new_branch_name: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, TS)]
+pub struct PullMainBranchRequest {
+    pub repo_id: Uuid,
+    pub target_branch: String,
+}
+
+#[derive(Debug, Serialize, TS)]
+pub struct PullMainBranchResponse {
+    pub commit_id: String,
+    pub branch_name: String,
 }
 
 #[derive(serde::Serialize, Debug, TS)]
@@ -1559,6 +1593,44 @@ pub async fn get_task_attempt_repos(
     Ok(ResponseJson(ApiResponse::success(repos)))
 }
 
+#[axum::debug_handler]
+pub async fn pull_main_branch(
+    Extension(workspace): Extension<Workspace>,
+    State(deployment): State<DeploymentImpl>,
+    Json(payload): Json<PullMainBranchRequest>,
+) -> Result<ResponseJson<ApiResponse<PullMainBranchResponse>>, ApiError> {
+    let pool = &deployment.db().pool;
+
+    let repo = Repo::find_by_id(pool, payload.repo_id)
+        .await?
+        .ok_or(RepoError::NotFound)?;
+
+    // Pull the target branch from remote
+    let commit_id = deployment.git().pull_branch(&repo.path, &payload.target_branch)?;
+
+    tracing::info!(
+        "Pulled branch '{}' for repo '{}': {}",
+        payload.target_branch,
+        repo.name,
+        commit_id
+    );
+
+    deployment
+        .track_if_analytics_allowed(
+            "main_branch_pulled",
+            serde_json::json!({
+                "repo_id": payload.repo_id.to_string(),
+                "branch_name": payload.target_branch,
+            }),
+        )
+        .await;
+
+    Ok(ResponseJson(ApiResponse::success(PullMainBranchResponse {
+        commit_id,
+        branch_name: payload.target_branch,
+    })))
+}
+
 pub async fn get_first_user_message(
     Extension(workspace): Extension<Workspace>,
     State(deployment): State<DeploymentImpl>,
@@ -1714,6 +1786,7 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
         .route("/stop", post(stop_task_attempt_execution))
         .route("/change-target-branch", post(change_target_branch))
         .route("/rename-branch", post(rename_branch))
+        .route("/pull-main-branch", post(pull_main_branch))
         .route("/repos", get(get_task_attempt_repos))
         .route("/first-message", get(get_first_user_message))
         .route("/mark-seen", put(mark_seen))

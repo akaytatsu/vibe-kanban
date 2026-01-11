@@ -1740,6 +1740,73 @@ impl GitService {
         self.fetch_from_remote(repo, remote, &refspec)
     }
 
+    /// Pull the latest changes for a branch from remote.
+    /// This does a fetch followed by a fast-forward merge of the remote branch into the local branch.
+    pub fn pull_branch(
+        &self,
+        repo_path: &Path,
+        branch_name: &str,
+    ) -> Result<String, GitServiceError> {
+        let repo = self.open_repo(repo_path)?;
+        let branch = Self::find_branch(&repo, branch_name)?;
+        let branch_ref = branch.into_reference();
+
+        // Get the remote for this branch
+        let remote = self.get_remote_from_branch_ref(&repo, &branch_ref)?;
+
+        // Fetch the specific branch from remote
+        self.fetch_branch_from_remote(&repo, &branch_ref)?;
+
+        // Get the local branch commit and remote tracking branch commit
+        let local_commit = branch_ref
+            .peel_to_commit()
+            .map_err(|e| GitServiceError::InvalidRepository(format!("Failed to get local commit: {e}")))?;
+
+        let default_remote_name = self.default_remote_name(&repo);
+        let remote_name = remote.name().unwrap_or(&default_remote_name);
+        let remote_branch_name = format!("{remote_name}/{branch_name}");
+
+        let remote_branch = Self::find_branch(&repo, &remote_branch_name)?;
+        let remote_commit = remote_branch
+            .get()
+            .peel_to_commit()
+            .map_err(|e| GitServiceError::InvalidRepository(format!("Failed to get remote commit: {e}")))?;
+
+        // Check if we can fast-forward (remote is ahead of local)
+        let merge_base = repo
+            .merge_base(local_commit.id(), remote_commit.id())
+            .map_err(|e| GitServiceError::InvalidRepository(format!("Failed to find merge base: {e}")))?;
+
+        if merge_base != local_commit.id() {
+            return Err(GitServiceError::BranchesDiverged(
+                format!("Cannot fast-forward: local branch '{branch_name}' has diverged from remote. Please rebase or merge manually.")
+            ));
+        }
+
+        // Fast-forward merge
+        if remote_commit.id() != local_commit.id() {
+            repo.reference(
+                &format!("refs/heads/{branch_name}"),
+                remote_commit.id(),
+                true,
+                &format!("Fast-forward pull: {remote_branch_name} -> {branch_name}"),
+            )
+            .map_err(|e| GitServiceError::InvalidRepository(format!("Failed to fast-forward: {e}")))?;
+
+            tracing::info!(
+                "Pulled branch '{}' from remote: {} -> {}",
+                branch_name,
+                local_commit.id(),
+                remote_commit.id()
+            );
+
+            Ok(remote_commit.id().to_string())
+        } else {
+            tracing::info!("Branch '{}' is already up to date", branch_name);
+            Ok(local_commit.id().to_string())
+        }
+    }
+
     /// Clone a repository to the specified directory
     #[cfg(feature = "cloud")]
     pub fn clone_repository(

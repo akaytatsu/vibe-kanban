@@ -16,10 +16,11 @@ use db::models::{
     project::{CreateProject, Project, ProjectError, SearchResult, UpdateProject},
     project_repo::{CreateProjectRepo, ProjectRepo},
     repo::Repo,
+    repo::RepoError,
 };
 use deployment::Deployment;
 use futures_util::{SinkExt, StreamExt, TryStreamExt};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use services::services::{
     file_search_cache::SearchQuery, project::ProjectServiceError,
     remote_client::CreateRemoteProjectPayload,
@@ -317,9 +318,63 @@ pub struct OpenEditorRequest {
     pub git_repo_path: Option<PathBuf>,
 }
 
+#[derive(Debug, Serialize, Deserialize, TS)]
+pub struct PullProjectMainBranchRequest {
+    pub repo_id: Uuid,
+    pub target_branch: String,
+}
+
+#[derive(Debug, Serialize, TS)]
+pub struct PullProjectMainBranchResponse {
+    pub commit_id: String,
+    pub branch_name: String,
+}
+
 #[derive(Debug, serde::Serialize, ts_rs::TS)]
 pub struct OpenEditorResponse {
     pub url: Option<String>,
+}
+
+#[axum::debug_handler]
+pub async fn pull_project_main_branch(
+    Extension(project): Extension<Project>,
+    State(deployment): State<DeploymentImpl>,
+    Json(payload): Json<PullProjectMainBranchRequest>,
+) -> Result<ResponseJson<ApiResponse<PullProjectMainBranchResponse>>, ApiError> {
+    let pool = &deployment.db().pool;
+
+    let repo = Repo::find_by_id(pool, payload.repo_id)
+        .await?
+        .ok_or(RepoError::NotFound)?;
+
+    // Pull the target branch from remote
+    let commit_id = deployment.git().pull_branch(&repo.path, &payload.target_branch)?;
+
+    tracing::info!(
+        "Pulled branch '{}' for repo '{}' in project {}: {}",
+        payload.target_branch,
+        repo.name,
+        project.id,
+        commit_id
+    );
+
+    deployment
+        .track_if_analytics_allowed(
+            "project_main_branch_pulled",
+            serde_json::json!({
+                "project_id": project.id.to_string(),
+                "repo_id": payload.repo_id.to_string(),
+                "branch_name": payload.target_branch,
+            }),
+        )
+        .await;
+
+    Ok(ResponseJson(ApiResponse::success(
+        PullProjectMainBranchResponse {
+            commit_id,
+            branch_name: payload.target_branch,
+        },
+    )))
 }
 
 pub async fn open_project_in_editor(
@@ -576,6 +631,7 @@ pub fn router(deployment: &DeploymentImpl) -> Router<DeploymentImpl> {
         )
         .route("/remote/members", get(get_project_remote_members))
         .route("/search", get(search_project_files))
+        .route("/pull-main-branch", post(pull_project_main_branch))
         .route("/open-editor", post(open_project_in_editor))
         .route(
             "/link",

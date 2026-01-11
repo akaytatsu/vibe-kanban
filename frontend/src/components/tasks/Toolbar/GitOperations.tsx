@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   CheckCircle,
   ExternalLink,
+  Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button.tsx';
 import {
@@ -30,6 +31,8 @@ import { useTranslation } from 'react-i18next';
 import { useAttemptRepo } from '@/hooks/useAttemptRepo';
 import { useGitOperations } from '@/hooks/useGitOperations';
 import { useRepoBranches } from '@/hooks';
+import { usePullMainBranch } from '@/hooks/usePullMainBranch';
+import { useToast } from '@/hooks/use-toast';
 
 interface GitOperationsProps {
   selectedAttempt: Workspace;
@@ -60,11 +63,34 @@ function GitOperations({
   const git = useGitOperations(selectedAttempt.id, selectedRepoId ?? undefined);
   const { data: branches = [] } = useRepoBranches(selectedRepoId);
   const isChangingTargetBranch = git.states.changeTargetBranchPending;
+  const { toast } = useToast();
+
+  // Pull main branch hook
+  const pullMainBranch = usePullMainBranch(
+    selectedAttempt.id,
+    (response) => {
+      toast({
+        title: t('git.pullMainBranch.success', 'Branch pulled successfully'),
+        description: t(
+          'git.pullMainBranch.successDescription',
+          `Updated to commit ${response.commit_id.slice(0, 8)}`
+        ),
+      });
+    },
+    (error) => {
+      toast({
+        title: t('git.pullMainBranch.error', 'Failed to pull branch'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  );
 
   // Local state for git operations
   const [merging, setMerging] = useState(false);
   const [pushing, setPushing] = useState(false);
   const [rebasing, setRebasing] = useState(false);
+  const [pulling, setPulling] = useState(false);
   const [mergeSuccess, setMergeSuccess] = useState(false);
   const [pushSuccess, setPushSuccess] = useState(false);
 
@@ -218,6 +244,22 @@ function GitOperations({
       });
     } finally {
       setRebasing(false);
+    }
+  };
+
+  const handlePullMainBranch = async () => {
+    const repoId = getSelectedRepoId();
+    const targetBranch = getSelectedRepoStatus()?.target_branch_name;
+    if (!repoId || !targetBranch) return;
+
+    setPulling(true);
+    try {
+      await pullMainBranch.mutateAsync({
+        repo_id: repoId,
+        target_branch: targetBranch,
+      });
+    } finally {
+      setPulling(false);
     }
   };
 
@@ -528,6 +570,22 @@ function GitOperations({
                 className={`h-3.5 w-3.5 ${rebasing ? 'animate-spin' : ''}`}
               />
               <span className="truncate max-w-[10ch]">{rebaseButtonLabel}</span>
+            </Button>
+
+            <Button
+              onClick={handlePullMainBranch}
+              disabled={pulling || isAttemptRunning || hasConflictsCalculated}
+              variant="outline"
+              size="xs"
+              className="border-primary text-primary hover:bg-primary gap-1 shrink-0"
+              aria-label={t('git.pullMainBranch.label', 'Pull Main Branch')}
+            >
+              <Download
+                className={`h-3.5 w-3.5 ${pulling ? 'animate-bounce' : ''}`}
+              />
+              <span className="hidden sm:inline truncate max-w-[10ch]">
+                {t('git.pullMainBranch.shortLabel', 'Pull')}
+              </span>
             </Button>
           </div>
         ) : null}

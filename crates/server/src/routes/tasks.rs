@@ -182,6 +182,28 @@ pub async fn create_task_and_start(
         .await?
         .ok_or(ProjectError::ProjectNotFound)?;
 
+    // Auto-pull main branch if configured
+    if project.auto_pull_main_branch {
+        for repo_input in &payload.repos {
+            if let Ok(repo) = Repo::find_by_id(pool, repo_input.repo_id).await {
+                if let Err(e) = deployment.git().pull_branch(&repo.path, &repo_input.target_branch) {
+                    tracing::warn!(
+                        "Failed to auto-pull main branch '{}' for repo '{}': {}",
+                        repo_input.target_branch,
+                        repo.name,
+                        e
+                    );
+                } else {
+                    tracing::info!(
+                        "Auto-pulled main branch '{}' for repo '{}'",
+                        repo_input.target_branch,
+                        repo.name
+                    );
+                }
+            }
+        }
+    }
+
     let attempt_id = Uuid::new_v4();
     let git_branch_name = deployment
         .container()

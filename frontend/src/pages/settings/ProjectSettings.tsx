@@ -21,6 +21,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { useProjectMutations } from '@/hooks/useProjectMutations';
@@ -32,12 +33,14 @@ import type { Project, Repo, UpdateProject } from 'shared/types';
 interface ProjectFormState {
   name: string;
   default_agent_working_dir: string;
+  auto_pull_main_branch: boolean;
 }
 
 function projectToFormState(project: Project): ProjectFormState {
   return {
     name: project.name,
     default_agent_working_dir: project.default_agent_working_dir ?? '',
+    auto_pull_main_branch: project.auto_pull_main_branch ?? false,
   };
 }
 
@@ -447,6 +450,33 @@ export function ProjectSettings() {
                 <p className="text-sm text-muted-foreground">
                   {t('settings.projects.agentWorkingDir.helper')}
                 </p>
+              </div>
+
+              <div className="flex items-center space-x-2 py-2 border-t">
+                <Checkbox
+                  id="auto-pull-main-branch"
+                  checked={draft.auto_pull_main_branch}
+                  onCheckedChange={(checked) =>
+                    updateDraft({ auto_pull_main_branch: checked as boolean })
+                  }
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label
+                    htmlFor="auto-pull-main-branch"
+                    className="text-sm font-medium"
+                  >
+                    {t(
+                      'settings.projects.autoPullMainBranch.label',
+                      'Auto-pull main branch'
+                    )}
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    {t(
+                      'settings.projects.autoPullMainBranch.helper',
+                      'Automatically pull the main branch before creating a new task'
+                    )}
+                  </p>
+                </div>
               </div>
 
               {/* Save Button */}
