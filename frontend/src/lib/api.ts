@@ -324,6 +324,22 @@ export const projectsApi = {
     return handleApiResponse<Project>(response);
   },
 
+  pullMainBranch: async (
+    projectId: string,
+    data: { repo_id: string; target_branch: string }
+  ): Promise<{ commit_id: string; branch_name: string }> => {
+    const response = await makeRequest(
+      `/api/projects/${projectId}/pull-main-branch`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return handleApiResponse<{ commit_id: string; branch_name: string }>(
+      response
+    );
+  },
+
   getRepositories: async (projectId: string): Promise<Repo[]> => {
     const response = await makeRequest(
       `/api/projects/${projectId}/repositories`
@@ -768,6 +784,22 @@ export const attemptsApi = {
       }
     );
     return handleApiResponse<void>(response);
+  },
+
+  pullMainBranch: async (
+    attemptId: string,
+    data: { repo_id: string; target_branch: string }
+  ): Promise<{ commit_id: string; branch_name: string }> => {
+    const response = await makeRequest(
+      `/api/task-attempts/${attemptId}/pull-main-branch`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return handleApiResponse<{ commit_id: string; branch_name: string }>(
+      response
+    );
   },
 };
 

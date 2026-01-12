@@ -1,5 +1,5 @@
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { useMutation } from '@tanstack/react-query';
+import { attemptsApi } from '@/lib/api';
 
 interface PullMainBranchRequest {
   repo_id: string;
@@ -21,10 +21,7 @@ export function usePullMainBranch(
       if (!attemptId) {
         throw new Error('Attempt ID is required');
       }
-      const response = await api.post<{
-        data: PullMainBranchResponse;
-      }>(`/task-attempts/${attemptId}/pull-main-branch`, params);
-      return response.data.data;
+      return attemptsApi.pullMainBranch(attemptId, params);
     },
     onSuccess: (response) => {
       onSuccess?.(response);

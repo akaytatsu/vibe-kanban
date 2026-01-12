@@ -1,5 +1,5 @@
-import { useMutation, type UseMutationOptions } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { useMutation } from '@tanstack/react-query';
+import { projectsApi } from '@/lib/api';
 
 interface PullProjectMainBranchRequest {
   repo_id: string;
@@ -21,10 +21,7 @@ export function usePullProjectMainBranch(
       if (!projectId) {
         throw new Error('Project ID is required');
       }
-      const response = await api.post<{
-        data: PullProjectMainBranchResponse;
-      }>(`/projects/${projectId}/pull-main-branch`, params);
-      return response.data.data;
+      return projectsApi.pullMainBranch(projectId, params);
     },
     onSuccess: (response) => {
       onSuccess?.(response);
