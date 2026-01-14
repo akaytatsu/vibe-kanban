@@ -127,9 +127,6 @@ importers:
       '@virtuoso.dev/message-list':
         specifier: ^1.13.3
         version: 1.13.3(patch_hash=cb1b2c95355ddf1e01c2e187822fa87890142a742634eabdd58a4be7409a0306)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      allotment:
-        specifier: ^1.20.5
-        version: 1.20.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1
