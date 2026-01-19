@@ -11,8 +11,6 @@ interface WorkspacesSidebarProps {
   selectedWorkspaceId: string | null;
   onSelectWorkspace: (id: string) => void;
   onAddWorkspace?: () => void;
-  onArchiveWorkspace?: (id: string) => void;
-  onPinWorkspace?: (id: string) => void;
   searchQuery: string;
   onSearchChange: (value: string) => void;
   /** Whether we're in create mode */
@@ -33,8 +31,6 @@ export function WorkspacesSidebar({
   selectedWorkspaceId,
   onSelectWorkspace,
   onAddWorkspace,
-  onArchiveWorkspace,
-  onPinWorkspace,
   searchQuery,
   onSearchChange,
   isCreateMode = false,
@@ -55,8 +51,6 @@ export function WorkspacesSidebar({
   const filteredArchivedWorkspaces = archivedWorkspaces
     .filter((workspace) => workspace.name.toLowerCase().includes(searchLower))
     .slice(0, isSearching ? undefined : DISPLAY_LIMIT);
-
-  const hasArchivedWorkspaces = archivedWorkspaces.length > 0;
 
   return (
     <div className="w-full h-full bg-secondary flex flex-col">
@@ -109,8 +103,6 @@ export function WorkspacesSidebar({
                   latestProcessStatus={workspace.latestProcessStatus}
                   prStatus={workspace.prStatus}
                   onClick={() => onSelectWorkspace(workspace.id)}
-                  onArchive={() => onArchiveWorkspace?.(workspace.id)}
-                  onPin={() => onPinWorkspace?.(workspace.id)}
                 />
               ))
             )}
@@ -147,8 +139,6 @@ export function WorkspacesSidebar({
                 latestProcessStatus={workspace.latestProcessStatus}
                 prStatus={workspace.prStatus}
                 onClick={() => onSelectWorkspace(workspace.id)}
-                onArchive={() => onArchiveWorkspace?.(workspace.id)}
-                onPin={() => onPinWorkspace?.(workspace.id)}
               />
             ))}
           </div>
@@ -156,29 +146,27 @@ export function WorkspacesSidebar({
       </div>
 
       {/* Fixed footer toggle - only show if there are archived workspaces */}
-      {hasArchivedWorkspaces && (
-        <div className="border-t border-primary p-base">
-          <button
-            onClick={() => onShowArchiveChange?.(!showArchive)}
-            className="w-full flex items-center gap-base text-sm text-low hover:text-normal transition-colors duration-100"
-          >
-            {showArchive ? (
-              <>
-                <ArrowLeftIcon className="size-icon-xs" />
-                <span>{t('common:workspaces.backToActive')}</span>
-              </>
-            ) : (
-              <>
-                <ArchiveIcon className="size-icon-xs" />
-                <span>{t('common:workspaces.viewArchive')}</span>
-                <span className="ml-auto text-xs bg-tertiary px-1.5 py-0.5 rounded">
-                  {archivedWorkspaces.length}
-                </span>
-              </>
-            )}
-          </button>
-        </div>
-      )}
+      <div className="border-t border-primary p-base">
+        <button
+          onClick={() => onShowArchiveChange?.(!showArchive)}
+          className="w-full flex items-center gap-base text-sm text-low hover:text-normal transition-colors duration-100"
+        >
+          {showArchive ? (
+            <>
+              <ArrowLeftIcon className="size-icon-xs" />
+              <span>{t('common:workspaces.backToActive')}</span>
+            </>
+          ) : (
+            <>
+              <ArchiveIcon className="size-icon-xs" />
+              <span>{t('common:workspaces.viewArchive')}</span>
+              <span className="ml-auto text-xs bg-tertiary px-1.5 py-0.5 rounded">
+                {archivedWorkspaces.length}
+              </span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

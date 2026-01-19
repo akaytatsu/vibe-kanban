@@ -165,7 +165,8 @@
     "workingBranch": "작업 브랜치",
     "recent": "최근",
     "other": "기타",
-    "devServerPreview": "개발 서버 미리보기"
+    "devServerPreview": "개발 서버 미리보기",
+    "terminal": "터미널"
   },
   "repos": {
     "loading": "저장소 로딩 중...",
@@ -203,7 +204,8 @@
     "defaultPlaceholder": "명령어를 입력하거나 검색..."
   },
   "chatBox": {
-    "variants": "변형"
+    "variants": "변형",
+    "customise": "사용자 지정"
   },
   "projects": {
     "noProjectFound": "프로젝트를 찾을 수 없습니다",
@@ -279,5 +281,11 @@
   "search": {
     "matchCount": "{{current}} / {{total}}",
     "noMatches": "일치 항목 없음"
+  },
+  "contextUsage": {
+    "label": "컨텍스트 사용량",
+    "emptyTooltip": "컨텍스트 사용량은 다음 응답 후에 표시됩니다",
+    "tooltip": "컨텍스트: {{percentage}}% · {{used}} / {{total}} 토큰",
+    "ariaLabel": "컨텍스트 사용량: {{percentage}}%"
   }
 }

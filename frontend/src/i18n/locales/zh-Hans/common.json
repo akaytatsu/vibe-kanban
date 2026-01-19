@@ -165,7 +165,8 @@
     "workingBranch": "工作分支",
     "recent": "最近",
     "other": "其他",
-    "devServerPreview": "开发服务器预览"
+    "devServerPreview": "开发服务器预览",
+    "terminal": "终端"
   },
   "repos": {
     "loading": "正在加载仓库...",
@@ -203,7 +204,8 @@
     "defaultPlaceholder": "输入命令或搜索..."
   },
   "chatBox": {
-    "variants": "变体"
+    "variants": "变体",
+    "customise": "自定义"
   },
   "projects": {
     "noProjectFound": "未找到项目",
@@ -279,5 +281,11 @@
   "search": {
     "matchCount": "{{current}} / {{total}}",
     "noMatches": "无匹配项"
+  },
+  "contextUsage": {
+    "label": "上下文使用量",
+    "emptyTooltip": "上下文使用量将在下一次回复后显示",
+    "tooltip": "上下文：{{percentage}}% · {{used}} / {{total}} tokens",
+    "ariaLabel": "上下文使用量：{{percentage}}%"
   }
 }
