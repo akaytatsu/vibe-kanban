@@ -617,6 +617,8 @@
     "starting": "Démarrage...",
     "creating": "Création...",
     "create": "Créer",
+    "enterFocusMode": "Entrer en mode focus",
+    "exitFocusMode": "Quitter le mode focus",
     "discardDialog": {
       "title": "Abandonner les modifications non enregistrées ?",
       "description": "Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir les abandonner ?",

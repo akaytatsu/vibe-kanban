@@ -550,6 +550,8 @@
     "starting": "시작 중...",
     "creating": "만드는 중...",
     "create": "만들기",
+    "enterFocusMode": "포커스 모드 진입",
+    "exitFocusMode": "포커스 모드 종료",
     "discardDialog": {
       "title": "저장하지 않은 변경사항을 버리시겠습니까?",
       "description": "저장하지 않은 변경사항이 있습니다. 정말 버리시겠습니까?",

@@ -550,6 +550,8 @@
     "starting": "开始中...",
     "creating": "创建中...",
     "create": "创建",
+    "enterFocusMode": "进入专注模式",
+    "exitFocusMode": "退出专注模式",
     "discardDialog": {
       "title": "放弃未保存的更改？",
       "description": "您有未保存的更改。您确定要放弃它们吗？",

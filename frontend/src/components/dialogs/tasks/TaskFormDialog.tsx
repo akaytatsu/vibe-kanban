@@ -4,7 +4,7 @@ import NiceModal, { useModal } from '@ebay/nice-modal-react';
 import { defineModal } from '@/lib/modals';
 import { useDropzone } from 'react-dropzone';
 import { useForm, useStore } from '@tanstack/react-form';
-import { Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon, Maximize, Minimize } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -100,6 +100,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
     []
   );
   const [showDiscardWarning, setShowDiscardWarning] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
   const forceCreateOnlyRef = useRef(false);
 
   const { data: taskImages } = useTaskImages(
@@ -397,18 +398,42 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
   const loading = branchesLoading || userSystemLoading;
   if (loading) return <></>;
 
+  // Compute dialog size classes based on focus mode
+  const dialogSizeClasses = useMemo(() => {
+    const baseClasses = 'transition-all duration-300 ease-in-out';
+    return focusMode
+      ? `${baseClasses} max-w-7xl w-[95vw] h-[85vh]`
+      : `${baseClasses} max-w-xl`;
+  }, [focusMode]);
+
   return (
     <>
       <Dialog
         open={modal.visible}
         onOpenChange={handleDialogClose}
         uncloseable={showDiscardWarning}
+        className={dialogSizeClasses}
       >
         <div
           {...getRootProps()}
           className="h-full flex flex-col gap-4 p-4 relative min-h-0"
         >
           <input {...getInputProps()} />
+
+          {/* Focus Mode Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setFocusMode(!focusMode)}
+            className="absolute right-12 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
+            aria-label={focusMode ? t('taskFormDialog.exitFocusMode') : t('taskFormDialog.enterFocusMode')}
+            title={focusMode ? t('taskFormDialog.exitFocusMode') : t('taskFormDialog.enterFocusMode')}
+          >
+            {focusMode ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            <span className="sr-only">
+              {focusMode ? t('taskFormDialog.exitFocusMode') : t('taskFormDialog.enterFocusMode')}
+            </span>
+          </button>
+
           {/* Drag overlay */}
           {isDragActive && (
             <div className="absolute inset-0 z-50 bg-primary/95 border-2 border-dashed border-primary-foreground/50 rounded-lg flex items-center justify-center pointer-events-none">
@@ -442,7 +467,10 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
               <div className="border p-3">
                 <WYSIWYGEditor
                   placeholder={t('taskFormDialog.descriptionPlaceholder')}
-                  className="w-full h-24 overflow-auto"
+                  className={cn(
+                    "w-full overflow-auto transition-all duration-300",
+                    focusMode ? "h-64" : "h-24"
+                  )}
                   value={field.state.value}
                   onChange={(desc) => field.handleChange(desc)}
                   disabled={isSubmitting}

@@ -550,6 +550,8 @@
     "starting": "開始中...",
     "creating": "建立中...",
     "create": "建立",
+    "enterFocusMode": "進入專注模式",
+    "exitFocusMode": "退出專注模式",
     "discardDialog": {
       "title": "放棄未儲存的變更？",
       "description": "您有未儲存的變更。確定要放棄嗎？",

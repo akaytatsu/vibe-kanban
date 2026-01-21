@@ -617,6 +617,8 @@
     "starting": "Starting...",
     "creating": "Creating...",
     "create": "Create",
+    "enterFocusMode": "Enter focus mode",
+    "exitFocusMode": "Exit focus mode",
     "discardDialog": {
       "title": "Discard unsaved changes?",
       "description": "You have unsaved changes. Are you sure you want to discard them?",
