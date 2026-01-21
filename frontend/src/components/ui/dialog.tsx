@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { X } from 'lucide-react';
+import { X, Expand, Minimize } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { useHotkeysContext } from 'react-hotkeys-hook';
@@ -11,8 +11,10 @@ const Dialog = React.forwardRef<
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
     uncloseable?: boolean;
+    focusMode?: boolean;
+    onFocusModeChange?: (focusMode: boolean) => void;
   }
->(({ className, open, onOpenChange, children, uncloseable, ...props }, ref) => {
+>(({ className, open, onOpenChange, children, uncloseable, focusMode, onFocusModeChange, ...props }, ref) => {
   const { enableScope, disableScope } = useHotkeysContext();
 
   // Manage dialog scope when open/closed
@@ -116,19 +118,36 @@ const Dialog = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          'relative z-[9999] flex flex-col w-full max-w-xl gap-4 bg-primary p-6 shadow-lg duration-200 sm:rounded-lg my-8',
+          'relative z-[9999] flex flex-col w-full gap-4 bg-primary p-6 shadow-lg duration-200 sm:rounded-lg',
+          focusMode ? 'max-w-[95vw] h-[90vh] my-4' : 'max-w-xl my-8',
           className
         )}
         {...props}
       >
         {!uncloseable && (
-          <button
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
-            onClick={() => onOpenChange?.(false)}
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </button>
+          <>
+            {onFocusModeChange && (
+              <button
+                className="absolute left-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10"
+                onClick={() => onFocusModeChange(!focusMode)}
+                aria-label={focusMode ? 'Sair do modo foco' : 'Modo foco'}
+                title={focusMode ? 'Sair do modo foco' : 'Modo foco'}
+              >
+                {focusMode ? <Minimize className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
+                <span className="sr-only">{focusMode ? 'Sair do modo foco' : 'Modo foco'}</span>
+              </button>
+            )}
+            <button
+              className={cn(
+                'absolute top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-10',
+                onFocusModeChange ? 'right-4' : 'right-4'
+              )}
+              onClick={() => onOpenChange?.(false)}
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </button>
+          </>
         )}
         {children}
       </div>

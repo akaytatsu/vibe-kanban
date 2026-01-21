@@ -114,6 +114,7 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
     []
   );
   const [showDiscardWarning, setShowDiscardWarning] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
   const forceCreateOnlyRef = useRef(false);
 
   const { data: taskImages } = useTaskImages(
@@ -432,6 +433,8 @@ const TaskFormDialogImpl = NiceModal.create<TaskFormDialogProps>((props) => {
         open={modal.visible}
         onOpenChange={handleDialogClose}
         uncloseable={showDiscardWarning}
+        focusMode={focusMode}
+        onFocusModeChange={setFocusMode}
       >
         <div
           {...getRootProps()}
